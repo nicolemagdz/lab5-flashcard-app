@@ -1,4 +1,5 @@
-# Prompt 1 Phase 1 - Claude
+### Claude
+# Prompt 1 Phase 1
 Acting as a senior full‑stack architect, design the complete architecture for a Flashcard Study App using a React frontend and a Node.js + Express backend with Prisma ORM.
 Explain the rationale behind:         
 -the chosen stack          
@@ -44,7 +45,8 @@ Events: navigate to deck, create new deck
 Accessibility: proper labels for buttons and list items       
 Provide the component, CSS module, and a short explanation of design choices.        
 
-# Prompt 1 Response Phase 2 - Vercel v0
+### Vercel v0
+# Prompt 1 Response Phase 2
 Created a stateless DeckListPage component with a CSS module and a shared DeckContract type.
 
 Files
@@ -69,3 +71,38 @@ Usage:
   onNavigateToDeck={(id) => router.push(`/decks/${id}`)}
   onCreateDeck={() => router.push("/decks/new")}
 />
+
+# Prompt 2 Phase 2
+Generate a DeckEditor React component.           
+Requirements:         
+Layout: deck title input + list of cards        
+Props: deckId: string            
+State: title, cards            
+Events: add card, delete card, save deck          
+Accessibility: label inputs correctly             
+Include component + CSS + explanation.
+
+# Prompt 2 Response Phase 2
+Created the DeckEditor component with a matching CSS module, consistent with the existing DeckListPage styling.
+
+Files
+
+* components/deck-editor.tsx — the component
+* components/deck-editor.module.css — the styles
+
+Component API
+
+* Required prop: deckId: string
+* Optional: initialTitle, initialCards, and an onSave(deckId, { title, cards }) callback so the parent decides how to persist.
+* Local state: title and cards (each card is { id, front, back }).
+* Events: Add card appends a blank card, Delete removes a card by id, Save deck invokes onSave (disabled until there's a title and at least one card).
+
+Design choices
+
+* Accessibility first: The title input uses htmlFor/id via useId(). Each card's front/back inputs have their own labels that include the card's position (e.g. "Front (card 2)") so screen reader users get unambiguous context in a repeating list. Delete buttons carry an aria-label ("Delete card 2") since their visible text alone ("Delete") isn't unique. The card list is a semantic <ul> labeled by the "Cards" heading via aria-labelledby.
+* Stable keys: Cards get a generated id (using crypto.randomUUID() with a fallback), so React reconciliation and label associations stay correct across add/delete — never index-based keys for editable rows.
+* Controlled inputs with immutable state updates (map/filter) keep the data predictable and easy to lift up.
+* Visual consistency: Reuses the same design tokens, radii, focus-ring treatment, and spacing scale as DeckListPage. Cards use a responsive grid (front | back | delete) that collapses to a single column under 32rem.
+* "use client" since it manages interactive local state.
+
+To wire persistence, pass an onSave handler from the parent (e.g. a Server Action or SWR mutation). I kept saving as a callback rather than hardcoding a data layer, matching the contract-driven pattern from DeckListPage.
