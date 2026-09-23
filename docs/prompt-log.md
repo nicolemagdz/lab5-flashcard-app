@@ -66,11 +66,11 @@ Design choices
 
 Usage:
 
-<DeckListPage
+`<DeckListPage
   decks={decks}
   onNavigateToDeck={(id) => router.push(`/decks/${id}`)}
   onCreateDeck={() => router.push("/decks/new")}
-/>
+/>`
 
 # Prompt 2 Phase 2
 Generate a DeckEditor React component.           
@@ -99,10 +99,46 @@ Component API
 
 Design choices
 
-* Accessibility first: The title input uses htmlFor/id via useId(). Each card's front/back inputs have their own labels that include the card's position (e.g. "Front (card 2)") so screen reader users get unambiguous context in a repeating list. Delete buttons carry an aria-label ("Delete card 2") since their visible text alone ("Delete") isn't unique. The card list is a semantic <ul> labeled by the "Cards" heading via aria-labelledby.
+* Accessibility first: The title input uses htmlFor/id via useId(). Each card's front/back inputs have their own labels that include the card's position (e.g. "Front (card 2)") so screen reader users get unambiguous context in a repeating list. Delete buttons carry an aria-label ("Delete card 2") since their visible text alone ("Delete") isn't unique. The card list is a semantic `<ul>` labeled by the "Cards" heading via aria-labelledby.
 * Stable keys: Cards get a generated id (using crypto.randomUUID() with a fallback), so React reconciliation and label associations stay correct across add/delete — never index-based keys for editable rows.
 * Controlled inputs with immutable state updates (map/filter) keep the data predictable and easy to lift up.
 * Visual consistency: Reuses the same design tokens, radii, focus-ring treatment, and spacing scale as DeckListPage. Cards use a responsive grid (front | back | delete) that collapses to a single column under 32rem.
 * "use client" since it manages interactive local state.
 
 To wire persistence, pass an onSave handler from the parent (e.g. a Server Action or SWR mutation). I kept saving as a callback rather than hardcoding a data layer, matching the contract-driven pattern from DeckListPage.
+
+# Prompt 3 Phase 2
+Generate a CardEditor component.        
+Requirements:          
+Props: card: CardContract          
+State: front, back           
+Events: save card           
+Accessibility: label text fields            
+Include component + CSS.         
+
+# Prompt 3 Response Phase 2
+Added the CardEditor component, its CSS module, and a shared CardContract type.
+
+Files
+
+* types/deck.ts — added CardContract (id, front, back) next to DeckContract, since no card contract existed yet. Centralizing it keeps this component consistent with DeckListPage and DeckEditor.
+* components/card-editor.tsx — the component.
+* components/card-editor.module.css — styles matching the existing editor design language (same tokens, focus rings, and button treatment as deck-editor).
+
+Component behavior
+
+* Props: card: CardContract, plus an onSave(card) callback so the parent controls persistence (the save event has to go somewhere).
+* State: front and back, seeded from card.
+* Events: submitting the form fires onSave with a trimmed, merged card ({ ...card, front, back }), preserving the id.
+
+Design choices
+
+* `<form>` with onSubmit rather than a bare button click — this gives keyboard users Enter-to-submit for free and native required validation.
+* Accessibility: each `<textarea>` is tied to its `<label>` via useId()-generated ids (collision-safe if multiple editors render), and the form has an aria-label="Edit card". Focus-visible outlines are honored throughout.
+* Textareas over inputs: card faces are often multi-line, so I used resizable `<textarea>`s.
+* Save disabled when either field is empty or nothing changed, preventing no-op and empty saves.
+* It's a controlled, presentational component — no data fetching or persistence inside — so it drops into DeckEditor or any card-management flow.
+
+Wire it up by passing a card and a save handler:
+
+`<CardEditor card={card} onSave={(updated) => updateCard(updated)} />`
