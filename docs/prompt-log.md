@@ -142,3 +142,40 @@ Design choices
 Wire it up by passing a card and a save handler:
 
 `<CardEditor card={card} onSave={(updated) => updateCard(updated)} />`
+
+# Prompt 4 Phase 2
+Generate a StudySession component.         
+Requirements:         
+Props: deckId: string         
+State: current card index, score           
+Events: show answer, mark correct/incorrect, next card       
+Accessibility: buttons must have descriptive labels        
+Include component + CSS.
+
+# Prompt 4 Response Phase 2
+Created the StudySession component and its CSS module, matching the design language of the existing deck/card components.
+
+Files
+
+* components/study-session.tsx — the component
+* components/study-session.module.css — scoped styles
+
+Design choices
+
+* Props & state as specified. Takes deckId: string (plus a cards: CardContract[] array, since a session needs the actual cards to render — reusing the shared CardContract type). Internal state is exactly what the requirements call for: currentIndex (current card), score, plus a small answerShown flag to drive the show-answer → grade flow.
+
+* Event flow. Each card runs a two-step interaction: Show answer reveals the back, then Correct/Incorrect both record the result and advance (next card). Correct increments the score; both move to the next index. When the index passes the last card, a completion summary with the final score is shown.
+
+Accessibility.
+
+* Every action button has a descriptive aria-label explaining both what it does and its consequence (e.g. "Mark this card correct and go to the next card", "Show the answer for the current card") rather than relying on the short visible text alone.
+* The `<section>` is labelled via aria-labelledby with an sr-only heading that names the deck; progress ("Card 2 of 5") is exposed as visible text.
+* The card area and score use aria-live="polite" so the newly revealed answer and updated score are announced. The completion state uses role="status".
+* Buttons are real `<button type="button">` elements with visible :focus-visible outlines.
+
+Styling. 
+* Uses the same CSS-module pattern, spacing scale, radii, and CSS-variable-with-fallback tokens as card-editor.module.css. Added semantic success/destructive color tokens for the Correct/Incorrect buttons so they read at a glance while still theming through variables.
+
+Edge cases. 
+* Empty decks render a friendly "No cards to study" state instead of crashing on an undefined card.
+
