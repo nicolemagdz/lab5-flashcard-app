@@ -49,17 +49,17 @@ Created a stateless DeckListPage component with a CSS module and a shared DeckCo
 
 Files
 
-types/deck.ts — the DeckContract interface (id, title, optional description, cardCount, optional lastStudiedAt).
-components/deck-list-page.tsx — the presentational component.
-components/deck-list-page.module.css — scoped styles.
+* types/deck.ts — the DeckContract interface (id, title, optional description, cardCount, optional lastStudiedAt).
+* components/deck-list-page.tsx — the presentational component.
+* components/deck-list-page.module.css — scoped styles.
 Design choices
 
-Truly stateless. The component holds no local state. It renders from decks and delegates all behavior upward. I added two callback props, onNavigateToDeck(deckId) and onCreateDeck(), to satisfy the two required events — a presentational component can't own navigation or persistence, so those belong to the parent/router. If you'd rather the component call a router directly, swap the callbacks for that.
-Semantic structure. A `<main>` wrapper, an `<h1>` in a `<header>`, and a real `<ul>/<li>` list so the deck collection is announced as a list with an item count by screen readers.
-Buttons, not divs. Each deck row and the create action are native `<button type="button">` elements, so they're keyboard-focusable and activate on Enter/Space for free.
-Accessible labels. The list has aria-label="Flashcard decks", and each deck button has a descriptive aria-label (e.g. "Study Biology 101, 24 cards") so the action and context are clear without relying on visual layout. The decorative + is aria-hidden.
-Empty state. When decks is empty, a friendly prompt replaces the list instead of rendering an empty container.
-Themeable CSS. Styles use CSS custom properties with sensible fallbacks (var(--primary, #4f46e5)), visible :focus-visible outlines for keyboard users, and a mobile-first, single-column layout that wraps the header on narrow screens.
+* Truly stateless. The component holds no local state. It renders from decks and delegates all behavior upward. I added two callback props, onNavigateToDeck(deckId) and onCreateDeck(), to satisfy the two required events — a presentational component can't own navigation or persistence, so those belong to the parent/router. If you'd rather the component call a router directly, swap the callbacks for that.
+* Semantic structure. A `<main>` wrapper, an `<h1>` in a `<header>`, and a real `<ul>/<li>` list so the deck collection is announced as a list with an item count by screen readers.
+* Buttons, not divs. Each deck row and the create action are native `<button type="button">` elements, so they're keyboard-focusable and activate on Enter/Space for free.
+* Accessible labels. The list has aria-label="Flashcard decks", and each deck button has a descriptive aria-label (e.g. "Study Biology 101, 24 cards") so the action and context are clear without relying on visual layout. The decorative + is aria-hidden.
+* Empty state. When decks is empty, a friendly prompt replaces the list instead of rendering an empty container.
+* Themeable CSS. Styles use CSS custom properties with sensible fallbacks (var(--primary, #4f46e5)), visible :focus-visible outlines for keyboard users, and a mobile-first, single-column layout that wraps the header on narrow screens.
 Usage:
 
 <DeckListPage
