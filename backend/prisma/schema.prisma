@@ -1,0 +1,67 @@
+// Prisma schema for the Flashcard Study App.
+// Run `npm run prisma:generate` after any change, and
+// `npm run prisma:migrate` to apply it to the database.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  decks     Deck[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Deck {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  cards       Card[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model Card {
+  id           String         @id @default(uuid())
+  front        String
+  back         String
+  deckId       String
+  deck         Deck           @relation(fields: [deckId], references: [id], onDelete: Cascade)
+
+  // Spaced-repetition state (SM-2 style), owned by
+  // src/services/spacedRepetition.service.ts
+  easeFactor   Float          @default(2.5)
+  interval     Int            @default(0)
+  repetitions  Int            @default(0)
+  nextReviewAt DateTime       @default(now())
+
+  sessions     StudySession[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([deckId])
+  @@index([nextReviewAt])
+}
+
+model StudySession {
+  id         String   @id @default(uuid())
+  cardId     String
+  card       Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  quality    Int      // 0-5 recall grade, per SM-2
+  reviewedAt DateTime @default(now())
+
+  @@index([cardId])
+}
