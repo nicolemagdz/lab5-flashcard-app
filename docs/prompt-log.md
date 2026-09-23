@@ -1,4 +1,4 @@
-# Prompt 1 Phase 1
+# Prompt 1 Phase 1 - Claude
 Acting as a senior full‑stack architect, design the complete architecture for a Flashcard Study App using a React frontend and a Node.js + Express backend with Prisma ORM.
 Explain the rationale behind:         
 -the chosen stack          
@@ -33,3 +33,37 @@ Environment configuration is centralized in backend/src/config/env.ts, which par
 61 files, fully wired: Prisma schema (with an SM-2 spaced-repetition model built into Card), a working spacedRepetition.service.ts, auth (register/login/JWT middleware), nested deck→card→review routes, and a minimal but functional React app (login, dashboard, study session with flip cards). Everything type-checks against the shared @flashcard/shared contracts.
 
 To run it: npm install, copy the two .env.example files, npm run prisma:generate && npm run prisma:migrate, then npm run dev.
+
+# Prompt 1 Phase 2
+Acting as a senior React engineer, generate a DeckListPage component for a Flashcard Study App.       
+Requirements:        
+Layout: list of decks, “Create Deck” button         
+Props: decks: DeckContract[]             
+State: none         
+Events: navigate to deck, create new deck            
+Accessibility: proper labels for buttons and list items       
+Provide the component, CSS module, and a short explanation of design choices.        
+
+# Prompt 1 Response Phase 2 - Vercel v0
+Created a stateless DeckListPage component with a CSS module and a shared DeckContract type.
+
+Files
+
+types/deck.ts — the DeckContract interface (id, title, optional description, cardCount, optional lastStudiedAt).
+components/deck-list-page.tsx — the presentational component.
+components/deck-list-page.module.css — scoped styles.
+Design choices
+
+Truly stateless. The component holds no local state. It renders from decks and delegates all behavior upward. I added two callback props, onNavigateToDeck(deckId) and onCreateDeck(), to satisfy the two required events — a presentational component can't own navigation or persistence, so those belong to the parent/router. If you'd rather the component call a router directly, swap the callbacks for that.
+Semantic structure. A <main> wrapper, an <h1> in a <header>, and a real <ul>/<li> list so the deck collection is announced as a list with an item count by screen readers.
+Buttons, not divs. Each deck row and the create action are native <button type="button"> elements, so they're keyboard-focusable and activate on Enter/Space for free.
+Accessible labels. The list has aria-label="Flashcard decks", and each deck button has a descriptive aria-label (e.g. "Study Biology 101, 24 cards") so the action and context are clear without relying on visual layout. The decorative + is aria-hidden.
+Empty state. When decks is empty, a friendly prompt replaces the list instead of rendering an empty container.
+Themeable CSS. Styles use CSS custom properties with sensible fallbacks (var(--primary, #4f46e5)), visible :focus-visible outlines for keyboard users, and a mobile-first, single-column layout that wraps the header on narrow screens.
+Usage:
+
+<DeckListPage
+  decks={decks}
+  onNavigateToDeck={(id) => router.push(`/decks/${id}`)}
+  onCreateDeck={() => router.push("/decks/new")}
+/>
