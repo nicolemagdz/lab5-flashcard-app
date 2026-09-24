@@ -179,3 +179,53 @@ Styling.
 Edge cases. 
 * Empty decks render a friendly "No cards to study" state instead of crashing on an undefined card.
 
+### Claude
+# Prompt 1 Phase 3
+Acting as a backend architect, generate a Prisma schema for a Flashcard Study App.         
+Models required:        
+Deck: id, title         
+Card: id, deckId, front, back            
+StudySession: id, deckId, correctCount, incorrectCount, timestamp          
+Include relations, indexes, and cascading deletes.           
+
+# Prompt 1 Response Phase 3
+Your schema is ready in schema.prisma.
+
+* Cascading deletes: Deleting a Deck removes its Card and StudySession rows, through onDelete: Cascade on both relations.
+* Indexes: Card has an index on deckId. StudySession has a composite index on [deckId, timestamp], which covers "latest sessions for a deck" queries and progress-over-time charts.
+* Defaults: IDs use cuid(), both counts default to 0, and timestamp defaults to now().
+* Table names: @@map gives snake_case table names (decks, cards, study_sessions).
+
+It assumes PostgreSQL. On SQLite or MySQL, change the provider and remove @db.Text from front and back.
+
+# Prompt 2 Phase 3
+Generate Express controllers, routes, and services for the Flashcard Study App.           
+Endpoints needed:          
+Deck CRUD             
+Card CRUD             
+Study session creation + retrieval             
+Requirements:              
+Use Prisma ORM            
+Return meaningful HTTP status codes             
+Validate input               
+Ensure responses match the shared contract             
+Provide controllers, routes, and service functions.
+
+# Prompt 2 Response Phase 3
+Structure and design decisions:
+
+Layers: routes → controllers (req/res + validation) → services (Prisma queries) → errorHandler middleware (maps thrown errors to status codes).
+
+Routes (mounted under /api):
+
+* GET/POST /decks, GET/PATCH/DELETE /decks/:id
+* GET/POST /decks/:deckId/cards (nested — cards always belong to a deck), GET/PATCH/DELETE /cards/:id
+* GET/POST /decks/:deckId/sessions
+
+Validation: Zod schemas in schemas.js, field names matching the Prisma models exactly (title, front/back, correctCount/incorrectCount/timestamp) so responses match the shared contract.
+
+Status codes: 200 (read/update), 201 (create), 204 (delete, no body), 400 (validation failure, with error.details), 404 (missing deck/card/session — checked explicitly, and Prisma's P2025 is mapped as a fallback).
+
+Cascades: deleting a deck relies on the schema's onDelete: Cascade, so cards and sessions go with it — no manual cleanup needed in the service.
+
+To run it: npm install, set DATABASE_URL, npx prisma migrate dev, then npm run dev.
