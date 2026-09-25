@@ -39,302 +39,302 @@ Here are the rewritten services:
 Net effect of the rewrite: updateDeck/deleteDeck/createCard/updateCard/deleteCard/createSession each dropped from 2 queries to 1 and are no longer race-prone; listCardsByDeck/listSessionsByDeck dropped from 2 round-trips to 1 nested query; and every list endpoint now takes ?skip=&take= (validated, capped at 100) instead of returning an unbounded table scan. Behavior for callers is unchanged — same 404s on missing decks/cards, same 400s on bad input — it's the same contract enforced closer to the database instead of duplicated in application code.
 
 ## First code for cardservice:
-const prisma = require('../lib/prisma');
-const { ApiError } = require('../middleware/errorHandler');
-const { getDeckById } = require('./deck.service');
+const prisma = require('../lib/prisma');         
+const { ApiError } = require('../middleware/errorHandler');         
+const { getDeckById } = require('./deck.service');         
 
-async function listCardsByDeck(deckId) {
-  // Ensures a 404 on an unknown deck rather than silently returning [].
-  await getDeckById(deckId);
-  return prisma.card.findMany({
-    where: { deckId },
-    orderBy: { id: 'asc' },
-  });
-}
+async function listCardsByDeck(deckId) {           
+  // Ensures a 404 on an unknown deck rather than silently returning [].         
+  await getDeckById(deckId);           
+  return prisma.card.findMany({          
+    where: { deckId },           
+    orderBy: { id: 'asc' },        
+  });         
+}        
 
-async function getCardById(id) {
-  const card = await prisma.card.findUnique({ where: { id } });
-  if (!card) {
-    throw new ApiError(404, `Card ${id} not found`);
-  }
-  return card;
-}
+async function getCardById(id) {        
+  const card = await prisma.card.findUnique({ where: { id } });          
+  if (!card) {        
+    throw new ApiError(404, `Card ${id} not found`);      
+  }        
+  return card;        
+}         
 
-async function createCard(deckId, data) {
-  await getDeckById(deckId);
-  return prisma.card.create({
-    data: { ...data, deckId },
-  });
-}
+async function createCard(deckId, data) {          
+  await getDeckById(deckId);            
+  return prisma.card.create({           
+    data: { ...data, deckId },           
+  });              
+}              
 
-async function updateCard(id, data) {
-  await getCardById(id);
-  return prisma.card.update({ where: { id }, data });
-}
+async function updateCard(id, data) {           
+  await getCardById(id);           
+  return prisma.card.update({ where: { id }, data });          
+}            
 
-async function deleteCard(id) {
-  await getCardById(id);
-  await prisma.card.delete({ where: { id } });
-}
+async function deleteCard(id) {            
+  await getCardById(id);            
+  await prisma.card.delete({ where: { id } });           
+}              
 
-module.exports = {
-  listCardsByDeck,
-  getCardById,
-  createCard,
-  updateCard,
-  deleteCard,
-};
+module.exports = {             
+  listCardsByDeck,            
+  getCardById,            
+  createCard,            
+  updateCard,            
+  deleteCard,              
+};              
 
 ## First code for deckservice:
-const prisma = require('../lib/prisma');
-const { ApiError } = require('../middleware/errorHandler');
+const prisma = require('../lib/prisma');            
+const { ApiError } = require('../middleware/errorHandler');           
 
-async function listDecks() {
-  return prisma.deck.findMany({
-    orderBy: { title: 'asc' },
-  });
-}
+async function listDecks() {           
+  return prisma.deck.findMany({             
+    orderBy: { title: 'asc' },            
+  });              
+}         
 
-async function getDeckById(id) {
-  const deck = await prisma.deck.findUnique({ where: { id } });
-  if (!deck) {
-    throw new ApiError(404, `Deck ${id} not found`);
-  }
-  return deck;
-}
+async function getDeckById(id) {            
+  const deck = await prisma.deck.findUnique({ where: { id } });        
+  if (!deck) {            
+    throw new ApiError(404, `Deck ${id} not found`);         
+  }          
+  return deck;           
+}            
 
-async function createDeck(data) {
-  return prisma.deck.create({ data });
-}
+async function createDeck(data) {             
+  return prisma.deck.create({ data });           
+}                  
 
-async function updateDeck(id, data) {
-  // Confirm existence first so we return a clean 404 instead of a Prisma P2025.
-  await getDeckById(id);
-  return prisma.deck.update({ where: { id }, data });
-}
+async function updateDeck(id, data) {            
+  // Confirm existence first so we return a clean 404 instead of a Prisma P2025.            
+  await getDeckById(id);            
+  return prisma.deck.update({ where: { id }, data });           
+}              
 
-async function deleteDeck(id) {
-  await getDeckById(id);
-  // Cascades to Card and StudySession rows per the Prisma schema.
-  await prisma.deck.delete({ where: { id } });
-}
+async function deleteDeck(id) {          
+  await getDeckById(id);               
+  // Cascades to Card and StudySession rows per the Prisma schema.         
+  await prisma.deck.delete({ where: { id } });          
+}           
 
-module.exports = {
-  listDecks,
-  getDeckById,
-  createDeck,
-  updateDeck,
-  deleteDeck,
-};
+module.exports = {        
+  listDecks,          
+  getDeckById,          
+  createDeck,          
+  updateDeck,           
+  deleteDeck,          
+};           
 
 ## First code for studysessionservice:
-const prisma = require('../lib/prisma');
-const { ApiError } = require('../middleware/errorHandler');
-const { getDeckById } = require('./deck.service');
+const prisma = require('../lib/prisma');         
+const { ApiError } = require('../middleware/errorHandler');         
+const { getDeckById } = require('./deck.service');          
 
-async function listSessionsByDeck(deckId) {
-  await getDeckById(deckId);
-  return prisma.studySession.findMany({
-    where: { deckId },
-    orderBy: { timestamp: 'desc' },
-  });
-}
+async function listSessionsByDeck(deckId) {             
+  await getDeckById(deckId);        
+  return prisma.studySession.findMany({          
+    where: { deckId },                
+    orderBy: { timestamp: 'desc' },        
+  });           
+}            
 
-async function getSessionById(id) {
-  const session = await prisma.studySession.findUnique({ where: { id } });
-  if (!session) {
-    throw new ApiError(404, `Study session ${id} not found`);
-  }
-  return session;
-}
+async function getSessionById(id) {           
+  const session = await prisma.studySession.findUnique({ where: { id } });         
+  if (!session) {            
+    throw new ApiError(404, `Study session ${id} not found`);         
+  }         
+  return session;           
+}           
 
-async function createSession(deckId, data) {
-  await getDeckById(deckId);
-  return prisma.studySession.create({
-    data: { ...data, deckId },
-  });
-}
+async function createSession(deckId, data) {          
+  await getDeckById(deckId);              
+  return prisma.studySession.create({            
+    data: { ...data, deckId },             
+  });             
+}            
 
-module.exports = {
-  listSessionsByDeck,
-  getSessionById,
-  createSession,
-};
+module.exports = {            
+  listSessionsByDeck,            
+  getSessionById,             
+  createSession,             
+};             
 
 ## First code for schemas:
-// Validation schemas. Field names mirror the Prisma models exactly so
-// responses and request bodies match the shared contract.
-const { z } = require('zod');
+// Validation schemas. Field names mirror the Prisma models exactly so         
+// responses and request bodies match the shared contract.          
+const { z } = require('zod');             
 
-const deckCreateSchema = z.object({
-  title: z.string().trim().min(1, 'title is required').max(200),
-});
+const deckCreateSchema = z.object({             
+  title: z.string().trim().min(1, 'title is required').max(200),         
+});            
 
-const deckUpdateSchema = z.object({
-  title: z.string().trim().min(1, 'title is required').max(200),
-});
+const deckUpdateSchema = z.object({          
+  title: z.string().trim().min(1, 'title is required').max(200),        
+});                     
 
-const cardCreateSchema = z.object({
-  front: z.string().trim().min(1, 'front is required'),
-  back: z.string().trim().min(1, 'back is required'),
-});
+const cardCreateSchema = z.object({          
+  front: z.string().trim().min(1, 'front is required'),           
+  back: z.string().trim().min(1, 'back is required'),         
+});           
 
-const cardUpdateSchema = z.object({
-  front: z.string().trim().min(1, 'front is required').optional(),
-  back: z.string().trim().min(1, 'back is required').optional(),
-}).refine((data) => data.front !== undefined || data.back !== undefined, {
-  message: 'At least one of front or back must be provided',
-});
+const cardUpdateSchema = z.object({         
+  front: z.string().trim().min(1, 'front is required').optional(),          
+  back: z.string().trim().min(1, 'back is required').optional(),          
+}).refine((data) => data.front !== undefined || data.back !== undefined, {          
+  message: 'At least one of front or back must be provided',         
+});          
 
-const studySessionCreateSchema = z.object({
-  correctCount: z.number().int().min(0),
-  incorrectCount: z.number().int().min(0),
-  timestamp: z.coerce.date().optional(),
-});
+const studySessionCreateSchema = z.object({         
+  correctCount: z.number().int().min(0),       
+  incorrectCount: z.number().int().min(0),        
+  timestamp: z.coerce.date().optional(),          
+});           
 
-const idParamSchema = z.object({
-  id: z.string().min(1),
-});
+const idParamSchema = z.object({             
+  id: z.string().min(1),             
+});             
 
-const deckIdParamSchema = z.object({
-  deckId: z.string().min(1),
-});
+const deckIdParamSchema = z.object({            
+  deckId: z.string().min(1),            
+});           
 
-module.exports = {
-  deckCreateSchema,
-  deckUpdateSchema,
-  cardCreateSchema,
-  cardUpdateSchema,
-  studySessionCreateSchema,
-  idParamSchema,
-  deckIdParamSchema,
-};
+module.exports = {          
+  deckCreateSchema,          
+  deckUpdateSchema,          
+  cardCreateSchema,         
+  cardUpdateSchema,           
+  studySessionCreateSchema,           
+  idParamSchema,            
+  deckIdParamSchema,              
+};               
 
 ## First code for deckcontroller:
-const { asyncHandler, ApiError } = require('../middleware/errorHandler');
-const { deckCreateSchema, deckUpdateSchema, idParamSchema } = require('../validators/schemas');
-const deckService = require('../services/deck.service');
+const { asyncHandler, ApiError } = require('../middleware/errorHandler');           
+const { deckCreateSchema, deckUpdateSchema, idParamSchema } = require('../validators/schemas');           
+const deckService = require('../services/deck.service');          
 
-const getDecks = asyncHandler(async (req, res) => {
-  const decks = await deckService.listDecks();
-  res.status(200).json(decks);
-});
+const getDecks = asyncHandler(async (req, res) => {             
+  const decks = await deckService.listDecks();            
+  res.status(200).json(decks);              
+});              
 
-const getDeck = asyncHandler(async (req, res) => {
-  const { id } = idParamSchema.parse(req.params);
-  const deck = await deckService.getDeckById(id);
-  res.status(200).json(deck);
-});
+const getDeck = asyncHandler(async (req, res) => {             
+  const { id } = idParamSchema.parse(req.params);           
+  const deck = await deckService.getDeckById(id);          
+  res.status(200).json(deck);             
+});            
 
-const createDeck = asyncHandler(async (req, res) => {
-  const parsed = deckCreateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new ApiError(400, 'Invalid deck payload', parsed.error.flatten());
-  }
-  const deck = await deckService.createDeck(parsed.data);
-  res.status(201).json(deck);
-});
+const createDeck = asyncHandler(async (req, res) => {           
+  const parsed = deckCreateSchema.safeParse(req.body);        
+  if (!parsed.success) {             
+    throw new ApiError(400, 'Invalid deck payload', parsed.error.flatten());         
+  }            
+  const deck = await deckService.createDeck(parsed.data);              
+  res.status(201).json(deck);               
+});                  
 
-const updateDeck = asyncHandler(async (req, res) => {
-  const { id } = idParamSchema.parse(req.params);
-  const parsed = deckUpdateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new ApiError(400, 'Invalid deck payload', parsed.error.flatten());
-  }
-  const deck = await deckService.updateDeck(id, parsed.data);
-  res.status(200).json(deck);
-});
+const updateDeck = asyncHandler(async (req, res) => {           
+  const { id } = idParamSchema.parse(req.params);             
+  const parsed = deckUpdateSchema.safeParse(req.body);           
+  if (!parsed.success) {             
+    throw new ApiError(400, 'Invalid deck payload', parsed.error.flatten());         
+  }           
+  const deck = await deckService.updateDeck(id, parsed.data);           
+  res.status(200).json(deck);              
+});             
 
-const deleteDeck = asyncHandler(async (req, res) => {
-  const { id } = idParamSchema.parse(req.params);
-  await deckService.deleteDeck(id);
-  res.status(204).send();
-});
+const deleteDeck = asyncHandler(async (req, res) => {              
+  const { id } = idParamSchema.parse(req.params);             
+  await deckService.deleteDeck(id);                
+  res.status(204).send();             
+});               
 
-module.exports = { getDecks, getDeck, createDeck, updateDeck, deleteDeck };
+module.exports = { getDecks, getDeck, createDeck, updateDeck, deleteDeck };        
 
 ## First code for cardcontroller:
-const { asyncHandler, ApiError } = require('../middleware/errorHandler');
-const {
-  cardCreateSchema,
-  cardUpdateSchema,
-  idParamSchema,
-  deckIdParamSchema,
-} = require('../validators/schemas');
-const cardService = require('../services/card.service');
+const { asyncHandler, ApiError } = require('../middleware/errorHandler');            
+const {             
+  cardCreateSchema,            
+  cardUpdateSchema,           
+  idParamSchema,            
+  deckIdParamSchema,                  
+} = require('../validators/schemas');                    
+const cardService = require('../services/card.service');              
+ 
+// GET /decks/:deckId/cards            
+const getCardsForDeck = asyncHandler(async (req, res) => {         
+  const { deckId } = deckIdParamSchema.parse(req.params);        
+  const cards = await cardService.listCardsByDeck(deckId);        
+  res.status(200).json(cards);            
+});                
 
-// GET /decks/:deckId/cards
-const getCardsForDeck = asyncHandler(async (req, res) => {
-  const { deckId } = deckIdParamSchema.parse(req.params);
-  const cards = await cardService.listCardsByDeck(deckId);
-  res.status(200).json(cards);
-});
+// GET /cards/:id            
+const getCard = asyncHandler(async (req, res) => {           
+  const { id } = idParamSchema.parse(req.params);            
+  const card = await cardService.getCardById(id);           
+  res.status(200).json(card);           
+});         
 
-// GET /cards/:id
-const getCard = asyncHandler(async (req, res) => {
-  const { id } = idParamSchema.parse(req.params);
-  const card = await cardService.getCardById(id);
-  res.status(200).json(card);
-});
+// POST /decks/:deckId/cards         
+const createCard = asyncHandler(async (req, res) => {          
+  const { deckId } = deckIdParamSchema.parse(req.params);         
+  const parsed = cardCreateSchema.safeParse(req.body);         
+  if (!parsed.success) {           
+    throw new ApiError(400, 'Invalid card payload', parsed.error.flatten());     
+  }           
+  const card = await cardService.createCard(deckId, parsed.data);        
+  res.status(201).json(card);            
+});                  
 
-// POST /decks/:deckId/cards
-const createCard = asyncHandler(async (req, res) => {
-  const { deckId } = deckIdParamSchema.parse(req.params);
-  const parsed = cardCreateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new ApiError(400, 'Invalid card payload', parsed.error.flatten());
-  }
-  const card = await cardService.createCard(deckId, parsed.data);
-  res.status(201).json(card);
-});
+// PATCH /cards/:id           
+const updateCard = asyncHandler(async (req, res) => {        
+  const { id } = idParamSchema.parse(req.params);        
+  const parsed = cardUpdateSchema.safeParse(req.body);        
+  if (!parsed.success) {             
+    throw new ApiError(400, 'Invalid card payload', parsed.error.flatten());        
+  }          
+  const card = await cardService.updateCard(id, parsed.data);         
+  res.status(200).json(card);            
+});            
 
-// PATCH /cards/:id
-const updateCard = asyncHandler(async (req, res) => {
-  const { id } = idParamSchema.parse(req.params);
-  const parsed = cardUpdateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new ApiError(400, 'Invalid card payload', parsed.error.flatten());
-  }
-  const card = await cardService.updateCard(id, parsed.data);
-  res.status(200).json(card);
-});
+// DELETE /cards/:id              
+const deleteCard = asyncHandler(async (req, res) => {          
+  const { id } = idParamSchema.parse(req.params);          
+  await cardService.deleteCard(id);            
+  res.status(204).send();             
+});                
 
-// DELETE /cards/:id
-const deleteCard = asyncHandler(async (req, res) => {
-  const { id } = idParamSchema.parse(req.params);
-  await cardService.deleteCard(id);
-  res.status(204).send();
-});
-
-module.exports = { getCardsForDeck, getCard, createCard, updateCard, deleteCard };
+module.exports = { getCardsForDeck, getCard, createCard, updateCard, deleteCard };            
 
 ## First code for studysessioncontroller:
-const { asyncHandler, ApiError } = require('../middleware/errorHandler');
-const {
-  studySessionCreateSchema,
-  deckIdParamSchema,
-} = require('../validators/schemas');
-const studySessionService = require('../services/studySession.service');
+const { asyncHandler, ApiError } = require('../middleware/  errorHandler');        
+const {            
+  studySessionCreateSchema,          
+  deckIdParamSchema,        
+} = require('../validators/schemas');          
+const studySessionService = require('../services/studySession.service');      
 
-// GET /decks/:deckId/sessions
-const getSessionsForDeck = asyncHandler(async (req, res) => {
-  const { deckId } = deckIdParamSchema.parse(req.params);
-  const sessions = await studySessionService.listSessionsByDeck(deckId);
-  res.status(200).json(sessions);
-});
+// GET /decks/:deckId/sessions        
+const getSessionsForDeck = asyncHandler(async (req, res) => {         
+  const { deckId } = deckIdParamSchema.parse(req.params);          
+  const sessions = await studySessionService.listSessionsByDeck(deckId);         
+  res.status(200).json(sessions);         
+});             
 
-// POST /decks/:deckId/sessions
-const createSession = asyncHandler(async (req, res) => {
-  const { deckId } = deckIdParamSchema.parse(req.params);
-  const parsed = studySessionCreateSchema.safeParse(req.body);
-  if (!parsed.success) {
-    throw new ApiError(400, 'Invalid study session payload', parsed.error.flatten());
-  }
-  const session = await studySessionService.createSession(deckId, parsed.data);
-  res.status(201).json(session);
-});
+// POST /decks/:deckId/sessions          
+const createSession = asyncHandler(async (req, res) => {           
+  const { deckId } = deckIdParamSchema.parse(req.params);             
+  const parsed = studySessionCreateSchema.safeParse(req.body);         
+  if (!parsed.success) {            
+    throw new ApiError(400, 'Invalid study session payload', parsed.error.flatten());          
+  }                
+  const session = await studySessionService.createSession(deckId, parsed.data);           
+  res.status(201).json(session);           
+});            
 
-module.exports = { getSessionsForDeck, createSession };
+module.exports = { getSessionsForDeck, createSession };         
 
 
 **All updated/improved code from these are in their respective files**
