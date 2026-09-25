@@ -1,9 +1,16 @@
 const prisma = require('../lib/prisma');
 const { ApiError } = require('../middleware/errorHandler');
 
-async function listDecks() {
+const MAX_PAGE_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 50;
+
+// Paginated instead of unbounded: `take` is clamped so a client can't force
+// a full-table scan/response by passing an arbitrarily large value.
+async function listDecks({ skip = 0, take = DEFAULT_PAGE_SIZE } = {}) {
   return prisma.deck.findMany({
     orderBy: { title: 'asc' },
+    skip,
+    take: Math.min(take, MAX_PAGE_SIZE),
   });
 }
 
@@ -19,16 +26,31 @@ async function createDeck(data) {
   return prisma.deck.create({ data });
 }
 
+// Single atomic query: let Prisma's own "record to update not found" error
+// (P2025) do the existence check, instead of a separate findUnique first.
+// That removes a round trip and closes the check-then-act race window where
+// the deck could be deleted between the check and the write.
 async function updateDeck(id, data) {
-  // Confirm existence first so we return a clean 404 instead of a Prisma P2025.
-  await getDeckById(id);
-  return prisma.deck.update({ where: { id }, data });
+  try {
+    return await prisma.deck.update({ where: { id }, data });
+  } catch (err) {
+    if (err.code === 'P2025') {
+      throw new ApiError(404, `Deck ${id} not found`);
+    }
+    throw err;
+  }
 }
 
 async function deleteDeck(id) {
-  await getDeckById(id);
-  // Cascades to Card and StudySession rows per the Prisma schema.
-  await prisma.deck.delete({ where: { id } });
+  try {
+    // Cascades to Card and StudySession rows per the Prisma schema.
+    await prisma.deck.delete({ where: { id } });
+  } catch (err) {
+    if (err.code === 'P2025') {
+      throw new ApiError(404, `Deck ${id} not found`);
+    }
+    throw err;
+  }
 }
 
 module.exports = {

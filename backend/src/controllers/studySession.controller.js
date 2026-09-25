@@ -1,6 +1,7 @@
 const { asyncHandler, ApiError } = require('../middleware/errorHandler');
 const {
   studySessionCreateSchema,
+  paginationQuerySchema,
   deckIdParamSchema,
 } = require('../validators/schemas');
 const studySessionService = require('../services/studySession.service');
@@ -8,7 +9,11 @@ const studySessionService = require('../services/studySession.service');
 // GET /decks/:deckId/sessions
 const getSessionsForDeck = asyncHandler(async (req, res) => {
   const { deckId } = deckIdParamSchema.parse(req.params);
-  const sessions = await studySessionService.listSessionsByDeck(deckId);
+  const pagination = paginationQuerySchema.safeParse(req.query);
+  if (!pagination.success) {
+    throw new ApiError(400, 'Invalid pagination params', pagination.error.flatten());
+  }
+  const sessions = await studySessionService.listSessionsByDeck(deckId, pagination.data);
   res.status(200).json(sessions);
 });
 

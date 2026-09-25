@@ -229,3 +229,6 @@ Status codes: 200 (read/update), 201 (create), 204 (delete, no body), 400 (valid
 Cascades: deleting a deck relies on the schema's onDelete: Cascade, so cards and sessions go with it — no manual cleanup needed in the service.
 
 To run it: npm install, set DATABASE_URL, npx prisma migrate dev, then npm run dev.
+
+# Majority problem prompts are in majority-problem.md
+

@@ -28,6 +28,13 @@ const studySessionCreateSchema = z.object({
   timestamp: z.coerce.date().optional(),
 });
 
+// Coerces string query params to numbers and guards against negative/absurd
+// values before they ever reach a Prisma `skip`/`take`.
+const paginationQuerySchema = z.object({
+  skip: z.coerce.number().int().min(0).default(0),
+  take: z.coerce.number().int().min(1).max(100).default(50),
+});
+
 const idParamSchema = z.object({
   id: z.string().min(1),
 });
@@ -42,6 +49,7 @@ module.exports = {
   cardCreateSchema,
   cardUpdateSchema,
   studySessionCreateSchema,
+  paginationQuerySchema,
   idParamSchema,
   deckIdParamSchema,
 };

@@ -1,9 +1,18 @@
 const { asyncHandler, ApiError } = require('../middleware/errorHandler');
-const { deckCreateSchema, deckUpdateSchema, idParamSchema } = require('../validators/schemas');
+const {
+  deckCreateSchema,
+  deckUpdateSchema,
+  paginationQuerySchema,
+  idParamSchema,
+} = require('../validators/schemas');
 const deckService = require('../services/deck.service');
 
 const getDecks = asyncHandler(async (req, res) => {
-  const decks = await deckService.listDecks();
+  const parsed = paginationQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    throw new ApiError(400, 'Invalid pagination params', parsed.error.flatten());
+  }
+  const decks = await deckService.listDecks(parsed.data);
   res.status(200).json(decks);
 });
 
