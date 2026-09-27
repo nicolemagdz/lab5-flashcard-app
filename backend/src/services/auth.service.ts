@@ -3,7 +3,7 @@
 
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import type { AuthResponse, LoginUserInput, RegisterUserInput } from "../shared/contracts";
+import type { AuthResponse, LoginUserInput, RegisterUserInput } from "../../shared/contracts";
 import { UserModel } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 import { env } from "../config/env";

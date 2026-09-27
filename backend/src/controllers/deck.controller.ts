@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import type { ApiResponse, DeckContract } from "../shared/contracts";
+import type { ApiResponse, DeckContract } from "../../shared/contracts";
 import { DeckService } from "../services/deck.service";
 import { asyncHandler } from "../utils/asyncHandler";
 import { toDeckContract } from "../serializers";

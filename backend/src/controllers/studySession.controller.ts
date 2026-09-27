@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import type { ApiResponse, StudySessionContract } from "../shared/contracts";
+import type { ApiResponse, StudySessionContract } from "../../shared/contracts";
 import { StudySessionService } from "../services/studySession.service";
 import { asyncHandler } from "../utils/asyncHandler";
 import { toStudySessionContract } from "../serializers";

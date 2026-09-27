@@ -1,6 +1,6 @@
 // Business logic for Deck CRUD + ownership checks.
 
-import type { CreateDeckInput, DeckDTO, UpdateDeckInput } from "../shared/contracts";
+import type { CreateDeckInput, DeckDTO, UpdateDeckInput } from "../../shared/contracts";
 import { DeckModel } from "../models/deck.model";
 import { ApiError } from "../utils/ApiError";
 

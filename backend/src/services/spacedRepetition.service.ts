@@ -2,7 +2,7 @@
 // Kept isolated from card.service so the scheduling math is independently
 // unit-testable and swappable (e.g. for a future FSRS implementation).
 
-import type { ReviewQuality } from "../shared/contracts";
+import type { ReviewQuality } from "../../shared/contracts";
 
 export interface SchedulingState {
   easeFactor: number;
