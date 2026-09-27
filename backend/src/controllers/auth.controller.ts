@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import type { ApiResponse, AuthResponse } from "@flashcard/shared";
+import type { ApiResponse, AuthResponse } from "../shared/contracts";
 import { AuthService } from "../services/auth.service";
 import { asyncHandler } from "../utils/asyncHandler";
 

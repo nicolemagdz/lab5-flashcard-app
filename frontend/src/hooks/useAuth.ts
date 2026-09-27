@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import type { LoginUserInput, RegisterUserInput } from "@flashcard/shared";
+import type { LoginUserInput, RegisterUserInput } from "../../shared/contracts";
 import { authApi } from "../api/auth.api";
 import { useAuthStore } from "../store/authStore";
 

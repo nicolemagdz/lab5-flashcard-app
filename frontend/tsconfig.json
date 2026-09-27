@@ -12,7 +12,7 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "paths": {
-      "@flashcard/shared": ["../shared/src/index.ts"]
+
     }
   },
   "include": ["src"]

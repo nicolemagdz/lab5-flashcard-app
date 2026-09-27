@@ -3,7 +3,7 @@
 // stays in React Query's cache, fetched via the hooks in ./hooks.
 
 import { create } from "zustand";
-import type { UserDTO } from "@flashcard/shared";
+import type { UserDTO } from "../../shared/contracts";
 
 interface AuthState {
   user: UserDTO | null;

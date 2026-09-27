@@ -1,4 +1,5 @@
-import type { AuthResponse, LoginUserInput, RegisterUserInput } from "@flashcard/shared";
+import type { AuthResponse, LoginUserInput, RegisterUserInput } from "../../shared/contracts
+";
 import { apiClient, unwrap } from "./client";
 
 export const authApi = {

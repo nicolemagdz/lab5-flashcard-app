@@ -3,7 +3,7 @@
 // or a thrown Error.
 
 import axios from "axios";
-import type { ApiResponse } from "@flashcard/shared";
+import type { ApiResponse } from "../../shared/contracts";
 import { useAuthStore } from "../store/authStore";
 
 export const apiClient = axios.create({

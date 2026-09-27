@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { CreateDeckInput } from "@flashcard/shared";
+import type { CreateDeckInput } from "../../shared/contracts";
 import { decksApi } from "../api/decks.api";
 
 const DECKS_KEY = ["decks"] as const;

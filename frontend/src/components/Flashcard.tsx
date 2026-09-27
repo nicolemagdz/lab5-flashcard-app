@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { CardDTO, ReviewQuality } from "@flashcard/shared";
+import type { CardDTO, ReviewQuality } from "../../shared/contracts";
 
 interface FlashcardProps {
   card: CardDTO;

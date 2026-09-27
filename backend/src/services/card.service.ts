@@ -1,6 +1,6 @@
 // Business logic for Card CRUD, fetching due cards, and recording reviews.
 
-import type { CardDTO, CreateCardInput, ReviewQuality, UpdateCardInput } from "@flashcard/shared";
+import type { CardDTO, CreateCardInput, ReviewQuality, UpdateCardInput } from "../shared/contracts";
 import { CardModel } from "../models/card.model";
 import { StudySessionModel } from "../models/studySession.model";
 import { DeckService } from "./deck.service";

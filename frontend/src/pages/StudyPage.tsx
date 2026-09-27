@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { ReviewQuality } from "@flashcard/shared";
+import type { ReviewQuality } from "../../shared/contracts";
 import { cardsApi } from "../api/cards.api";
 import { Flashcard } from "../components/Flashcard";
 
@@ -13,7 +13,8 @@ export function StudyPage() {
 
   const dueQuery = useQuery({
     queryKey: ["due-cards", deckId],
-    queryFn: () => cardsApi.getDue(deckId),
+    // queryFn: () => cardsApi.getDue(deckId),
+    queryFn: () => cardsApi.getDue({ deckId }),
     enabled: Boolean(deckId),
   });
 

@@ -232,3 +232,82 @@ To run it: npm install, set DATABASE_URL, npx prisma migrate dev, then npm run d
 
 # Majority problem prompts are in majority-problem.md
 
+# Prompt 1 Phase 4
+Acting as a full‑stack architect, generate a shared TypeScript contract file for the Flashcard Study App.           
+Include interfaces for:            
+DeckContract             
+CardContract            
+StudySessionContract            
+Use strict typing and ISO 8601 timestamps.            
+Output should be placed in `/shared/contracts.ts`.            
+
+# Prompt 1 Response Phase 4
+A few design notes:
+
+* readonly on immutable fields (id, ownerId, deckId, createdAt, startedAt) prevents accidental mutation of identity/audit fields on either side of the wire.
+* ISODateString alias documents intent even though it's structurally just string — TypeScript has no native date-time type, so this keeps the convention visible and easy to later upgrade to a branded type or Zod schema.
+* CardReviewContract was factored out since StudySessionContract needs an array of review events — happy to inline it if you'd rather keep only the three named interfaces.
+* srs sub-object on CardContract groups spaced-repetition fields so the contract can evolve (e.g. swap algorithms) without flattening/renaming top-level fields.
+
+# Prompt 2 Phase 4
+Review the backend controllers and ensure all responses match the shared TypeScript contracts exactly. Identify any mismatches, extra fields, or missing fields. Provide corrected controller code that aligns with the contract.
+
+# Prompt 2 Response Phase 4
+I found real, structural mismatches — not just field nitpicks — and one important gap: no endpoint in the TypeScript controllers actually returns a StudySessionContract-shaped object. I don't have your service-layer code or the current @flashcard/shared package, so I can't verify every field name against the database (I'll flag that explicitly), but the architecture-level problems are clear from what's here.
+
+What I found
+
+Two live, incompatible controller sets — found in the .js files versus the .ts files for deck/card/studySession. The .js versions call res.json(deck) raw. The .ts versions wrap responses in { success, data }. If both are mounted on any route table, clients get two different response shapes for the same resource.
+
+Type names don't match the contract — found in card.controller.ts and deck.controller.ts, which import CardDTO and DeckDTO from @flashcard/shared instead of CardContract and DeckContract. Either there's a second, undocumented type definition drifting from what we wrote, or these need renaming. Nothing today enforces that DeckDTO structurally equals DeckContract.
+
+StudySessionContract has no producer — found in studySession.controller.ts (TS), which only exported reviewCard, and that returned a CardDTO, not a session. There was no create, list, get, or complete-session endpoint returning the full session shape (id, userId, deckId, status, reviews[], cardsStudied, cardsCorrect, startedAt, completedAt). The .js version does have getSessionsForDeck and createSession, but without studySessionService's code I couldn't confirm its output shape, and it isn't wrapped in the ApiResponse envelope the TS side uses.
+
+No envelope defined in the shared contract file — the TS controllers assume ApiResponse<T> exists in @flashcard/shared, but the contracts file I originally gave you never defined it. That was an oversight on my end, fixed in the updated contracts.ts.
+
+AuthResponse isn't one of the three contracts — found in auth.controller.ts. That may be intentional, but it means the auth payload shape (whether it leaks a password hash, what it includes) is currently ungoverned by anything we've reviewed.
+
+Unverifiable without service code — across all the .js controllers and all the TS *Service calls, I can't confirm whether createdAt is emitted as an ISO string versus a Date object, or whether database internals like _id or __v leak straight through, since deck.service.ts, card.service.ts, and studySession.service.ts weren't uploaded.
+
+
+The response gave back another contracts.ts, because of `ApiResponse<T>` not being defined earlier when it is in the corrected controller files. 
+
+Serializers is located in /backend/src/
+
+controller-log.md has all of the original controller files, and the updated code is in their respective files. 
+
+# Prompt 3 Phase 4
+Review the frontend services and components to ensure they consume the shared contract correctly. Identify any mismatches and provide corrected service functions or component props.
+
+# Prompt 3 Response Phase 4
+Let me pull up the rest of the frontend before drawing conclusions — the API layer already differs from what I last wrote, so I want the current state of everything, not my memory of it.
+
+That full stub-based compile got bogged down in unrelated module-resolution noise (my stand-ins for scoped packages, not your code), so I'll rely on the isolated repro plus the manual pass. That's enough to confirm one concrete, real bug — let me fix it.
+
+**Findings**
+
+I re-read every service, hook, component, and page against the shared contracts (not from memory — checked the actual files) and verified suspected issues by type-checking them in isolation.
+
+**One real mismatch, confirmed and fixed:**
+
+StudyPage.tsx called the due-cards query like this:
+
+ts
+`queryFn: () => cardsApi.getDue(deckId),`
+
+But cardsApi.getDue is typed against the shared contract as getDue: (query: DueCardsQuery = {}) => ..., where DueCardsQuery = { deckId?: string; limit?: number }. Passing the bare deckId string doesn't satisfy that — I confirmed this fails compilation with TS2559 ("Type 'string' has no properties in common with type 'DueCardsQuery'"), TypeScript's weak-type-detection check catching exactly this kind of primitive-for-object slip. Even if it somehow compiled, axios's params config expects an object, not a raw string, so it would also have serialized incorrectly at runtime.
+
+**Fix applied:**
+
+ts
+`queryFn: () => cardsApi.getDue({ deckId }),`
+
+I verified the corrected call type-checks cleanly against the contract.
+
+Everything else checked out. cardsApi.review, decksApi.*, authApi.*, the Zustand store, and both DeckList/Flashcard component props all consume DeckDTO/CardDTO/ReviewCardInput/UserDTO correctly and consistently with the shared types.
+
+Two gaps worth flagging (not contract bugs, just incomplete wiring):
+
+decksApi.update and decksApi.get exist in the API layer but nothing calls them yet — there's no edit-deck UI.
+There's no card-creation/editing UI either — StudyPage only reviews cards that already exist.
+

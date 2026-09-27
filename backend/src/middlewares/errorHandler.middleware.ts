@@ -3,7 +3,7 @@
 // consistent structure.
 
 import { NextFunction, Request, Response } from "express";
-import type { ApiFailure } from "@flashcard/shared";
+import type { ApiFailure } from "../shared/contracts";
 import { ApiError } from "../utils/ApiError";
 import { env } from "../config/env";
 

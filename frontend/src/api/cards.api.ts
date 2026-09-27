@@ -1,4 +1,4 @@
-import type { CardDTO, CreateCardInput, ReviewQuality, UpdateCardInput } from "@flashcard/shared";
+import type { CardDTO, CreateCardInput, ReviewQuality, UpdateCardInput } from "../../shared/contracts";
 import { apiClient, unwrap } from "./client";
 
 export const cardsApi = {
