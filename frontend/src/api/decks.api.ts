@@ -1,4 +1,4 @@
-import type { CreateDeckInput, DeckDTO, UpdateDeckInput } from "../../shared/contracts";
+import type { CreateDeckInput, DeckDTO, UpdateDeckInput } from "../../../shared/contracts";
 import { apiClient, unwrap } from "./client";
 
 export const decksApi = {

@@ -12,8 +12,8 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "paths": {
-
+      
     }
   },
-  "include": ["src"]
+  "include": ["src", "../shared/src"]
 }

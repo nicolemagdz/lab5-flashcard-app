@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import type { LoginUserInput, RegisterUserInput } from "../../shared/contracts";
+import type { LoginUserInput, RegisterUserInput } from "../../../shared/contracts";
 import { authApi } from "../api/auth.api";
 import { useAuthStore } from "../store/authStore";
 
@@ -8,12 +8,12 @@ export function useAuth() {
 
   const login = useMutation({
     mutationFn: (input: LoginUserInput) => authApi.login(input),
-    onSuccess: (result) => setSession(result.user, result.accessToken),
+    onSuccess: (result) => setSession(result.user, result.token),
   });
 
   const register = useMutation({
     mutationFn: (input: RegisterUserInput) => authApi.register(input),
-    onSuccess: (result) => setSession(result.user, result.accessToken),
+    onSuccess: (result) => setSession(result.user, result.token),
   });
 
   return {

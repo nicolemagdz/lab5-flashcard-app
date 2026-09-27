@@ -15,7 +15,7 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^5.18.0",
+    "@prisma/client": "^5.22.0",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
@@ -37,10 +37,21 @@
     "@types/node": "^20.14.0",
     "eslint": "^9.9.0",
     "jest": "^30.5.2",
-    "prisma": "^5.18.0",
+    "prisma": "^5.22.0",
     "supertest": "^7.3.0",
     "tsx": "^4.16.2",
     "typescript": "^5.5.4",
     "vitest": "^2.0.5"
+  },
+  "allowScripts": {
+    "@prisma/client@7.10.0": true,
+    "@parcel/watcher@2.6.0": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.21.5": true,
+    "fsevents@2.3.3": true,
+    "unrs-resolver@1.12.2": true,
+    "workerd@1.20260901.1": true,
+    "@prisma/engines@5.19.0": true,
+    "prisma@5.19.0": true
   }
 }

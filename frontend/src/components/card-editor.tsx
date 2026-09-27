@@ -1,7 +1,7 @@
 "use client"
 
 import { useId, useState, type FormEvent } from "react"
-import type { CardContract } from "@/types/deck"
+import type { CardContract } from "../../../shared/contracts"
 import styles from "./card-editor.module.css"
 
 interface CardEditorProps {

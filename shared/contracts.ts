@@ -68,3 +68,103 @@ export interface StudySessionContract {
   readonly startedAt: ISODateString;
   completedAt?: ISODateString;
 }
+
+// AUTH INPUTS
+export interface LoginUserInput {
+  email: string;
+  password: string;
+}
+
+export interface RegisterUserInput {
+  email: string;
+  password: string;
+  name: string;
+}
+
+// AUTH RESPONSE
+export interface AuthResponse {
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    name: string | null;
+    createdAt: string;
+  };
+}
+
+
+// API FAILURE (backend expects this)
+export interface ApiFailure {
+  success: false;
+  error: {
+    message: string;
+    code: string;
+    details?: unknown;
+  };
+}
+
+// DECK DTOs
+export interface CreateDeckInput {
+  title: string;
+  description?: string;
+}
+
+export interface UpdateDeckInput {
+  name?: string;
+  description?: string;
+  tags?: string[];
+}
+
+export interface DeckDTO {
+  id: string;
+  title: string;
+  description?: string;
+  ownerId: string;
+  cardCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// CARD DTOs
+export interface CreateCardInput {
+  deckId: string;
+  front: string;
+  back: string;
+  hint?: string;
+}
+
+export interface UpdateCardInput {
+  front?: string;
+  back?: string;
+  hint?: string;
+}
+
+export interface CardDTO {
+  readonly id: string;
+  readonly deckId: string;
+  front: string;
+  back: string;
+  hint?: string;
+
+  srs: {
+    easeFactor: number;
+    intervalDays: number;
+    repetitions: number;
+    dueAt: ISODateString;
+  };
+
+  readonly createdAt: ISODateString;
+  updatedAt: ISODateString;
+}
+
+export interface UserDTO {
+  id: string;
+  email: string;
+  name: string | null;
+  createdAt: string;
+}
+
+
+
+// REVIEW QUALITY (backend expects this name)
+export type ReviewQuality = "again" | "hard" | "good" | "easy";

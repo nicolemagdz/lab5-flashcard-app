@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import type { CardContract } from "@/types/deck"
+import type { CardContract } from "../../../shared/contracts"
 import styles from "./study-session.module.css"
 
 interface StudySessionProps {

@@ -1,9 +1,5 @@
-// Single place that turns any thrown error into the shared ApiFailure
-// shape defined in @flashcard/shared, so the frontend always parses one
-// consistent structure.
-
 import { NextFunction, Request, Response } from "express";
-import type { ApiFailure } from "../../shared/contracts";
+import type { ApiFailure } from "../../../shared/contracts";
 import { ApiError } from "../utils/ApiError";
 import { env } from "../config/env";
 
@@ -24,8 +20,13 @@ export function errorHandler(
     success: false,
     error: {
       message: isKnown ? err.message : "Internal server error",
-      code: isKnown ? err.code : "INTERNAL_ERROR",
-      details: isKnown ? err.details : env.NODE_ENV === "development" ? err : undefined,
+      code: isKnown && err.code ? err.code : "INTERNAL_ERROR",
+      details:
+        isKnown
+          ? err.details
+          : env.NODE_ENV === "development"
+          ? err
+          : undefined,
     },
   };
 

@@ -2,16 +2,19 @@
 // Kept isolated from card.service so the scheduling math is independently
 // unit-testable and swappable (e.g. for a future FSRS implementation).
 
-import type { ReviewQuality } from "../../shared/contracts";
+import type { ReviewQuality } from "../../../shared/contracts";
 
 export interface SchedulingState {
   easeFactor: number;
-  interval: number;
+  intervalDays: number;
   repetitions: number;
 }
 
-export interface SchedulingResult extends SchedulingState {
-  nextReviewAt: Date;
+export interface SchedulingResult {
+  easeFactor: number;
+  intervalDays: number;
+  repetitions: number;
+  dueAt: Date;
 }
 
 const MIN_EASE_FACTOR = 1.3;
@@ -22,29 +25,36 @@ const MIN_EASE_FACTOR = 1.3;
  */
 export function scheduleNextReview(
   state: SchedulingState,
-  quality: ReviewQuality,
-  now: Date = new Date()
+  quality: number
 ): SchedulingResult {
-  let { easeFactor, interval, repetitions } = state;
+  let { easeFactor, intervalDays, repetitions } = state;
 
-  if (quality < 3) {
-    // Failed recall: reset repetitions, review again tomorrow.
+  // Update ease factor
+  easeFactor =
+    easeFactor +
+    (0.1 - (3 - quality) * (0.08 + (3 - quality) * 0.02));
+
+  if (easeFactor < 1.3) easeFactor = 1.3;
+
+  // Update repetitions & interval
+  if (quality < 2) {
     repetitions = 0;
-    interval = 1;
+    intervalDays = 1;
   } else {
     repetitions += 1;
-    if (repetitions === 1) interval = 1;
-    else if (repetitions === 2) interval = 6;
-    else interval = Math.round(interval * easeFactor);
+
+    if (repetitions === 1) intervalDays = 1;
+    else if (repetitions === 2) intervalDays = 6;
+    else intervalDays = Math.round(intervalDays * easeFactor);
   }
 
-  easeFactor = Math.max(
-    MIN_EASE_FACTOR,
-    easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
-  );
+  const dueAt = new Date();
+  dueAt.setDate(dueAt.getDate() + intervalDays);
 
-  const nextReviewAt = new Date(now);
-  nextReviewAt.setDate(nextReviewAt.getDate() + interval);
-
-  return { easeFactor, interval, repetitions, nextReviewAt };
+  return {
+    easeFactor,
+    intervalDays,
+    repetitions,
+    dueAt,
+  };
 }

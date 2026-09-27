@@ -1,9 +1,5 @@
-// Single axios instance. Attaches the bearer token from the auth store
-// and unwraps the shared ApiResponse<T> envelope, so callers just get T
-// or a thrown Error.
-
 import axios from "axios";
-import type { ApiResponse } from "../../shared/contracts";
+import type { ApiResponse } from "../../../shared/contracts";
 import { useAuthStore } from "../store/authStore";
 
 export const apiClient = axios.create({
@@ -12,12 +8,28 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
   return config;
 });
 
-export async function unwrap<T>(promise: Promise<{ data: ApiResponse<T> }>): Promise<T> {
+export async function unwrap<T>(
+  promise: Promise<{ data: ApiResponse<T> }>
+): Promise<T> {
   const { data: envelope } = await promise;
-  if (!envelope.success) throw new Error(envelope.error.message);
+
+  if (!envelope.success) {
+    throw new Error(
+      envelope.error?.message ?? "Unknown API error"
+    );
+  }
+
+  if (envelope.data === undefined) {
+    throw new Error("Response did not contain data");
+  }
+
   return envelope.data;
 }

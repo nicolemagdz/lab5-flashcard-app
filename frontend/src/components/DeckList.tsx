@@ -1,12 +1,11 @@
 // This is a merged file of the Claude DeckList and the v0 DeckList, to keep both architecture and UI
-import type { DeckContract } from "@/types/deck";
+import type { DeckDTO } from "../../../shared/contracts";
 import styles from "./deck-list-page.module.css";
 
 export interface DeckListProps {
-  decks: DeckContract[];
+  decks: DeckDTO[];
   onSelect: (deckId: string) => void;
   onDelete: (deckId: string) => void;
-  onCreate: () => void;
 }
 
 function formatCardCount(count: number): string {
@@ -14,7 +13,7 @@ function formatCardCount(count: number): string {
 }
 
 // Presentational-only component: receives data + callbacks, no API or React Query knowledge.
-export function DeckList({ decks, onSelect, onDelete, onCreate }: DeckListProps) {
+export function DeckList({ decks, onSelect, onDelete }: DeckListProps) {
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -23,11 +22,9 @@ export function DeckList({ decks, onSelect, onDelete, onCreate }: DeckListProps)
           <p className={styles.subtitle}>Choose a deck to study or create a new one.</p>
         </div>
 
-        <button
-          type="button"
-          className={styles.createButton}
-          onClick={onCreate}
-        >
+        {/* Remove the create button entirely OR leave it but make it do nothing */}
+        {/* If you want to keep the button visually, remove onClick */}
+        <button type="button" className={styles.createButton}>
           <span aria-hidden="true">+</span>
           Create Deck
         </button>

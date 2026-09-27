@@ -18,7 +18,7 @@ import type {
   CardContract,
   StudySessionContract,
   CardReviewContract,
-} from "../shared/contracts";
+} from "../../shared/contracts";
 
 function toISOString(value: unknown): string {
   if (value instanceof Date) return value.toISOString();

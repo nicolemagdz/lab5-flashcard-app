@@ -1,11 +1,17 @@
-// Business logic for Card CRUD, fetching due cards, and recording reviews.
-
-import type { CardDTO, CreateCardInput, ReviewQuality, UpdateCardInput } from "../../shared/contracts";
+import type { CardDTO, CreateCardInput, ReviewQuality, UpdateCardInput } from "../../../shared/contracts";
 import { CardModel } from "../models/card.model";
 import { StudySessionModel } from "../models/studySession.model";
 import { DeckService } from "./deck.service";
 import { scheduleNextReview } from "./spacedRepetition.service";
 import { ApiError } from "../utils/ApiError";
+
+// Convert ReviewQuality → numeric SM-2 quality
+const qualityMap: Record<ReviewQuality, number> = {
+  again: 0,
+  hard: 1,
+  good: 2,
+  easy: 3,
+};
 
 function toCardDTO(card: any): CardDTO {
   return {
@@ -13,10 +19,13 @@ function toCardDTO(card: any): CardDTO {
     deckId: card.deckId,
     front: card.front,
     back: card.back,
-    easeFactor: card.easeFactor,
-    interval: card.interval,
-    repetitions: card.repetitions,
-    nextReviewAt: card.nextReviewAt.toISOString(),
+    hint: card.hint ?? undefined,
+    srs: {
+      easeFactor: Number(card.easeFactor),
+      intervalDays: Number(card.interval),
+      repetitions: Number(card.repetitions),
+      dueAt: card.nextReviewAt.toISOString(),
+    },
     createdAt: card.createdAt.toISOString(),
     updatedAt: card.updatedAt.toISOString(),
   };
@@ -24,7 +33,7 @@ function toCardDTO(card: any): CardDTO {
 
 export const CardService = {
   async listByDeck(deckId: string, ownerId: string): Promise<CardDTO[]> {
-    await DeckService.getOwned(deckId, ownerId); // ownership check, throws 404
+    await DeckService.getOwned(deckId, ownerId);
     const cards = await CardModel.findManyByDeck(deckId);
     return cards.map(toCardDTO);
   },
@@ -55,22 +64,33 @@ export const CardService = {
     const card = await this.getOwnedOrThrow(cardId, ownerId);
 
     const result = scheduleNextReview(
-      { easeFactor: card.easeFactor, interval: card.interval, repetitions: card.repetitions },
-      quality
+      {
+        easeFactor: Number(card.easeFactor),
+        intervalDays: Number(card.interval),
+        repetitions: Number(card.repetitions),
+      },
+      qualityMap[quality]
     );
 
-    const updated = await CardModel.updateSchedule(card.id, result);
-    await StudySessionModel.create({ cardId: card.id, quality });
+    const updated = await CardModel.updateSchedule(card.id, {
+      easeFactor: result.easeFactor,
+      interval: result.intervalDays,
+      repetitions: result.repetitions,
+      nextReviewAt: result.dueAt,
+    });
+
+    await StudySessionModel.create({
+      cardId: card.id,
+      quality: qualityMap[quality], // FIXED
+    });
 
     return toCardDTO(updated);
   },
 
-  // Not exposed on the shared DTO type -- internal helper for
-  // ownership checks that need the raw Prisma row.
   async getOwnedOrThrow(cardId: string, ownerId: string) {
     const card = await CardModel.findById(cardId);
     if (!card) throw ApiError.notFound("Card not found");
-    await DeckService.getOwned(card.deckId, ownerId); // throws 404 if not owned
+    await DeckService.getOwned(card.deckId, ownerId);
     return card;
   },
 };

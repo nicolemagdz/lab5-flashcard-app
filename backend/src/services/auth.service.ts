@@ -1,12 +1,10 @@
-// Business logic for registration/login. Controllers stay thin and just
-// call into here; this is what unit tests target.
-
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import type { AuthResponse, LoginUserInput, RegisterUserInput } from "../../shared/contracts";
+import type { AuthResponse, LoginUserInput, RegisterUserInput } from "../../../shared/contracts";
 import { UserModel } from "../models/user.model";
 import { ApiError } from "../utils/ApiError";
 import { env } from "../config/env";
+import type { SignOptions } from "jsonwebtoken";
 
 function toUserDTO(user: { id: string; email: string; name: string | null; createdAt: Date }) {
   return {
@@ -17,8 +15,16 @@ function toUserDTO(user: { id: string; email: string; name: string | null; creat
   };
 }
 
-function signToken(userId: string) {
-  return jwt.sign({ sub: userId }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });
+function signToken(userId: string): string {
+  const options: SignOptions = {
+    expiresIn: env.JWT_EXPIRES_IN as any,
+  };
+
+  return jwt.sign(
+    { sub: userId },
+    env.JWT_SECRET,
+    options
+  );
 }
 
 export const AuthService = {
@@ -27,9 +33,16 @@ export const AuthService = {
     if (existing) throw ApiError.badRequest("An account with this email already exists");
 
     const hashed = await bcrypt.hash(input.password, env.BCRYPT_SALT_ROUNDS);
-    const user = await UserModel.create({ email: input.email, password: hashed, name: input.name });
+    const user = await UserModel.create({
+      email: input.email,
+      password: hashed,
+      name: input.name,
+    });
 
-    return { user: toUserDTO(user), accessToken: signToken(user.id) };
+    return {
+      token: signToken(user.id),
+      user: toUserDTO(user),
+    };
   },
 
   async login(input: LoginUserInput): Promise<AuthResponse> {
@@ -39,6 +52,9 @@ export const AuthService = {
     const valid = await bcrypt.compare(input.password, user.password);
     if (!valid) throw ApiError.unauthorized("Invalid email or password");
 
-    return { user: toUserDTO(user), accessToken: signToken(user.id) };
+    return {
+      token: signToken(user.id),
+      user: toUserDTO(user),
+    };
   },
 };

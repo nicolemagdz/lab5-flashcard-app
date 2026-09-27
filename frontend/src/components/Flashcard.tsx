@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { CardDTO, ReviewQuality } from "../../shared/contracts";
+import type { CardDTO, ReviewQuality } from "../../../shared/contracts";
 
 interface FlashcardProps {
   card: CardDTO;
@@ -7,10 +7,10 @@ interface FlashcardProps {
 }
 
 const GRADES: { quality: ReviewQuality; label: string }[] = [
-  { quality: 0, label: "Blackout" },
-  { quality: 2, label: "Hard" },
-  { quality: 3, label: "Good" },
-  { quality: 5, label: "Easy" },
+  { quality: "again", label: "Blackout" },
+  { quality: "hard", label: "Hard" },
+  { quality: "good", label: "Good" },
+  { quality: "easy", label: "Easy" },
 ];
 
 // Flip-card UI for a single study rep. Grading calls straight through to

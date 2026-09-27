@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import type { ApiResponse, CardContract } from "../../shared/contracts";
+import type { ApiResponse, CardContract } from "../../../shared/contracts";
 import { CardService } from "../services/card.service";
 import { asyncHandler } from "../utils/asyncHandler";
 import { toCardContract } from "../serializers";
