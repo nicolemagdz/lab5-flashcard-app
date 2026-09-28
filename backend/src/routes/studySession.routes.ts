@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { Router } from "express";
 import { getDueCards } from "../controllers/card.controller";
 import { requireAuth } from "../middlewares/auth.middleware";

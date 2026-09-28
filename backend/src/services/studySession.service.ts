@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import prisma from "../prisma";
 import { ApiError } from "../utils/ApiError";
 

@@ -10,7 +10,7 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 
 import { env } from "./config/env";
-import { apiRouter } from "./routes";
+import { apiRouter } from "./routes/routes";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 
 export function createApp(): Application {
